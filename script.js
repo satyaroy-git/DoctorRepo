@@ -1,238 +1,347 @@
-// ===== DOM Elements =====
+// ===== Preloader =====
+window.addEventListener('load', () => {
+    const preloader = document.getElementById('preloader');
+    setTimeout(() => {
+        preloader.classList.add('hidden');
+    }, 1500);
+});
+
+// ===== Navigation =====
 const navbar = document.getElementById('navbar');
-const navToggle = document.getElementById('navToggle');
-const navMenu = document.getElementById('navMenu');
-const navLinks = document.querySelectorAll('.nav-link');
-const backToTop = document.getElementById('backToTop');
-const sections = document.querySelectorAll('section[id]');
+const mobileToggle = document.getElementById('mobileToggle');
+const navLinks = document.getElementById('navLinks');
 
-// ===== Navbar Scroll Effect =====
-function handleScroll() {
-    const scrollY = window.scrollY;
-
-    // Navbar background
-    if (scrollY > 50) {
+// Scroll effect for navbar
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
         navbar.classList.add('scrolled');
     } else {
         navbar.classList.remove('scrolled');
     }
+});
 
-    // Back to top button
-    if (scrollY > 400) {
-        backToTop.classList.add('visible');
-    } else {
-        backToTop.classList.remove('visible');
-    }
+// Mobile menu toggle
+mobileToggle.addEventListener('click', () => {
+    mobileToggle.classList.toggle('active');
+    navLinks.classList.toggle('active');
+});
 
-    // Active nav link based on scroll position
-    updateActiveNavLink();
-}
+// Close mobile menu on link click
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        mobileToggle.classList.remove('active');
+        navLinks.classList.remove('active');
+    });
+});
 
-window.addEventListener('scroll', handleScroll);
-
-// ===== Active Navigation Link =====
-function updateActiveNavLink() {
-    const scrollY = window.scrollY + 100;
-
+// Active nav link on scroll
+const sections = document.querySelectorAll('section[id]');
+window.addEventListener('scroll', () => {
+    const scrollY = window.pageYOffset;
     sections.forEach(section => {
-        const sectionTop = section.offsetTop;
         const sectionHeight = section.offsetHeight;
+        const sectionTop = section.offsetTop - 100;
         const sectionId = section.getAttribute('id');
+        const navLink = document.querySelector(`.nav-links a[href="#${sectionId}"]`);
+        if (navLink) {
+            if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                navLink.classList.add('active');
+            } else {
+                navLink.classList.remove('active');
+            }
+        }
+    });
+});
 
-        if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === `#${sectionId}`) {
-                    link.classList.add('active');
+
+// ===== Hero Particles =====
+function createParticles() {
+    const particlesContainer = document.getElementById('particles');
+    const particleCount = 30;
+
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.width = (Math.random() * 4 + 2) + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.animationDelay = (Math.random() * 6) + 's';
+        particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+        particlesContainer.appendChild(particle);
+    }
+}
+createParticles();
+
+// ===== Scroll Reveal Animations =====
+function revealOnScroll() {
+    const reveals = document.querySelectorAll('.reveal-left, .reveal-right, .reveal-up');
+    const windowHeight = window.innerHeight;
+
+    reveals.forEach(el => {
+        const elementTop = el.getBoundingClientRect().top;
+        const revealPoint = 100;
+
+        if (elementTop < windowHeight - revealPoint) {
+            el.classList.add('revealed');
+        }
+    });
+}
+
+window.addEventListener('scroll', revealOnScroll);
+window.addEventListener('load', revealOnScroll);
+
+// ===== Counter Animation =====
+function animateCounters() {
+    const counters = document.querySelectorAll('.stat-number');
+    
+    counters.forEach(counter => {
+        const target = parseFloat(counter.getAttribute('data-count'));
+        const duration = 2000;
+        const startTime = Date.now();
+        const isDecimal = target % 1 !== 0;
+
+        function updateCounter() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Ease out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = eased * target;
+
+            if (isDecimal) {
+                counter.textContent = current.toFixed(1);
+            } else {
+                counter.textContent = Math.floor(current).toLocaleString();
+            }
+
+            if (progress < 1) {
+                requestAnimationFrame(updateCounter);
+            } else {
+                if (isDecimal) {
+                    counter.textContent = target.toFixed(1);
+                } else {
+                    counter.textContent = target.toLocaleString() + '+';
                 }
-            });
+            }
         }
+
+        updateCounter();
     });
 }
 
-// ===== Mobile Menu Toggle =====
-navToggle.addEventListener('click', () => {
-    navToggle.classList.toggle('active');
-    navMenu.classList.toggle('active');
-    document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
-});
+// Trigger counter when reviews section is in view
+const reviewsSection = document.getElementById('reviews');
+let counterAnimated = false;
 
-// Close menu when clicking a link
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navToggle.classList.remove('active');
-        navMenu.classList.remove('active');
-        document.body.style.overflow = '';
-    });
-});
-
-// Close menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!navMenu.contains(e.target) && !navToggle.contains(e.target)) {
-        navToggle.classList.remove('active');
-        navMenu.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-});
-
-// ===== Back to Top =====
-backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-// ===== Scroll Animations (Intersection Observer) =====
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
+const counterObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('animate-in');
-            observer.unobserve(entry.target);
+        if (entry.isIntersecting && !counterAnimated) {
+            counterAnimated = true;
+            animateCounters();
         }
     });
-}, observerOptions);
+}, { threshold: 0.3 });
 
-// Observe service cards, about cards, contact cards
-document.querySelectorAll('.service-card, .about-card, .contact-card, .info-card').forEach(el => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(30px)';
-    observer.observe(el);
-});
-
-// Add staggered delay to service cards
-document.querySelectorAll('.service-card').forEach((card, index) => {
-    card.style.animationDelay = `${index * 0.05}s`;
-    card.style.transitionDelay = `${index * 0.05}s`;
-});
-
-document.querySelectorAll('.about-card').forEach((card, index) => {
-    card.style.animationDelay = `${index * 0.1}s`;
-    card.style.transitionDelay = `${index * 0.1}s`;
-});
-
-// ===== Dynamic Today Highlight =====
-function highlightToday() {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const today = days[new Date().getDay()];
-
-    document.querySelectorAll('.hours-row').forEach(row => {
-        row.classList.remove('today');
-        const daySpan = row.querySelector('.day');
-        const badge = daySpan.querySelector('.today-badge');
-        if (badge) badge.remove();
-
-        if (daySpan.textContent.trim().startsWith(today)) {
-            row.classList.add('today');
-            const todayBadge = document.createElement('span');
-            todayBadge.className = 'today-badge';
-            todayBadge.textContent = 'Today';
-            daySpan.appendChild(todayBadge);
-        }
-    });
+if (reviewsSection) {
+    counterObserver.observe(reviewsSection);
 }
-
-highlightToday();
-
-// ===== Smooth reveal for hero content =====
-window.addEventListener('DOMContentLoaded', () => {
-    const heroText = document.querySelector('.hero-text');
-    const heroCard = document.querySelector('.hero-card');
-
-    if (heroText) {
-        heroText.style.opacity = '0';
-        heroText.style.transform = 'translateY(20px)';
-        heroText.style.transition = 'all 0.8s ease-out';
-
-        setTimeout(() => {
-            heroText.style.opacity = '1';
-            heroText.style.transform = 'translateY(0)';
-        }, 200);
-    }
-
-    if (heroCard) {
-        heroCard.style.opacity = '0';
-        heroCard.style.transform = 'translateY(30px) scale(0.95)';
-        heroCard.style.transition = 'all 0.8s ease-out 0.4s';
-
-        setTimeout(() => {
-            heroCard.style.opacity = '1';
-            heroCard.style.transform = 'translateY(0) scale(1)';
-        }, 200);
-    }
-});
-
-// ===== Phone number click tracking (console log) =====
-document.querySelectorAll('a[href^="tel:"]').forEach(link => {
-    link.addEventListener('click', () => {
-        console.log('Phone call initiated: ' + link.getAttribute('href'));
-    });
-});
-
 
 
 // ===== Appointment Form Handling =====
 const appointmentForm = document.getElementById('appointmentForm');
 const formSuccess = document.getElementById('formSuccess');
-const bookAnother = document.getElementById('bookAnother');
 
-// Set minimum date to today
-const dateInput = document.getElementById('appointmentDate');
-if (dateInput) {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.setAttribute('min', today);
-}
-
-// Form submission
 if (appointmentForm) {
-    appointmentForm.addEventListener('submit', function(e) {
+    // Set minimum date to today
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+    }
+
+    appointmentForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        // Collect form data
-        const formData = {
-            name: document.getElementById('patientName').value,
-            phone: document.getElementById('patientPhone').value,
-            email: document.getElementById('patientEmail').value,
-            date: document.getElementById('appointmentDate').value,
-            time: document.getElementById('appointmentTime').value,
-            service: document.getElementById('serviceType').value,
-            symptoms: document.getElementById('symptoms').value
-        };
-
         // Basic validation
-        if (!formData.name || !formData.phone || !formData.date || !formData.time || !formData.service) {
-            alert('Please fill in all required fields.');
+        const fullName = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const age = document.getElementById('age').value;
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const service = document.getElementById('service').value;
+
+        if (!fullName || !phone || !age || !date || !time || !service) {
+            showNotification('Please fill in all required fields.', 'error');
             return;
         }
 
-        // Phone number validation (Indian format)
+        // Phone validation (Indian format)
         const phoneRegex = /^[6-9]\d{9}$/;
-        const cleanPhone = formData.phone.replace(/[\s\-\+]/g, '').replace(/^91/, '');
-        if (!phoneRegex.test(cleanPhone)) {
-            alert('Please enter a valid 10-digit Indian phone number.');
+        if (!phoneRegex.test(phone.replace(/\s/g, '').replace(/^\+91/, ''))) {
+            showNotification('Please enter a valid 10-digit phone number.', 'error');
             return;
         }
 
-        // Log the appointment data (in production, this would send to a backend)
-        console.log('Appointment booked:', formData);
+        // Simulate form submission
+        const submitBtn = appointmentForm.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
 
-        // Show success message
-        appointmentForm.style.display = 'none';
-        formSuccess.style.display = 'block';
-
-        // Scroll to success message
-        formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+            appointmentForm.style.display = 'none';
+            formSuccess.classList.remove('hidden');
+            showNotification('Appointment booked successfully!', 'success');
+        }, 1500);
     });
 }
 
-// Book another appointment
-if (bookAnother) {
-    bookAnother.addEventListener('click', function() {
-        appointmentForm.reset();
-        formSuccess.style.display = 'none';
-        appointmentForm.style.display = 'flex';
-        appointmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// ===== Notification System =====
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+    // Style the notification
+    Object.assign(notification.style, {
+        position: 'fixed',
+        top: '100px',
+        right: '20px',
+        padding: '16px 24px',
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        fontSize: '0.9rem',
+        fontWeight: '500',
+        zIndex: '10000',
+        animation: 'slideInRight 0.3s ease forwards',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        background: type === 'success' ? '#2ecc71' : '#e74c3c',
+        color: 'white'
     });
+
+    document.body.appendChild(notification);
+
+    // Add animation keyframes
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Auto remove
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        notification.style.transition = 'all 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// ===== Back to Top Button =====
+const backToTop = document.getElementById('backToTop');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 500) {
+        backToTop.classList.add('visible');
+    } else {
+        backToTop.classList.remove('visible');
+    }
+});
+
+backToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ===== Smooth Scroll for all anchor links =====
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        const target = document.querySelector(targetId);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+});
+
+// ===== Gallery Lightbox =====
+document.querySelectorAll('.gallery-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const img = item.querySelector('img');
+        const lightbox = document.createElement('div');
+        lightbox.className = 'lightbox';
+        Object.assign(lightbox.style, {
+            position: 'fixed',
+            inset: '0',
+            background: 'rgba(0,0,0,0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: '100000',
+            cursor: 'pointer',
+            animation: 'fadeIn 0.3s ease'
+        });
+
+        const lightboxImg = document.createElement('img');
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        Object.assign(lightboxImg.style, {
+            maxWidth: '90%',
+            maxHeight: '90vh',
+            borderRadius: '12px',
+            boxShadow: '0 0 40px rgba(0,0,0,0.5)'
+        });
+
+        const closeBtn = document.createElement('span');
+        closeBtn.innerHTML = '&times;';
+        Object.assign(closeBtn.style, {
+            position: 'absolute',
+            top: '20px',
+            right: '30px',
+            color: 'white',
+            fontSize: '3rem',
+            cursor: 'pointer',
+            lineHeight: '1'
+        });
+
+        lightbox.appendChild(lightboxImg);
+        lightbox.appendChild(closeBtn);
+        document.body.appendChild(lightbox);
+        document.body.style.overflow = 'hidden';
+
+        lightbox.addEventListener('click', () => {
+            lightbox.remove();
+            document.body.style.overflow = '';
+        });
+    });
+});
+
+// ===== Typing effect for hero (subtle) =====
+const heroTagline = document.querySelector('.hero-tagline');
+if (heroTagline) {
+    const text = heroTagline.textContent;
+    heroTagline.textContent = '';
+    let i = 0;
+    setTimeout(() => {
+        const typeInterval = setInterval(() => {
+            heroTagline.textContent += text[i];
+            i++;
+            if (i >= text.length) clearInterval(typeInterval);
+        }, 40);
+    }, 1500);
 }
