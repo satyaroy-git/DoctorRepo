@@ -170,3 +170,69 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
         console.log('Phone call initiated: ' + link.getAttribute('href'));
     });
 });
+
+
+
+// ===== Appointment Form Handling =====
+const appointmentForm = document.getElementById('appointmentForm');
+const formSuccess = document.getElementById('formSuccess');
+const bookAnother = document.getElementById('bookAnother');
+
+// Set minimum date to today
+const dateInput = document.getElementById('appointmentDate');
+if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', today);
+}
+
+// Form submission
+if (appointmentForm) {
+    appointmentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = {
+            name: document.getElementById('patientName').value,
+            phone: document.getElementById('patientPhone').value,
+            email: document.getElementById('patientEmail').value,
+            date: document.getElementById('appointmentDate').value,
+            time: document.getElementById('appointmentTime').value,
+            service: document.getElementById('serviceType').value,
+            symptoms: document.getElementById('symptoms').value
+        };
+
+        // Basic validation
+        if (!formData.name || !formData.phone || !formData.date || !formData.time || !formData.service) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+
+        // Phone number validation (Indian format)
+        const phoneRegex = /^[6-9]\d{9}$/;
+        const cleanPhone = formData.phone.replace(/[\s\-\+]/g, '').replace(/^91/, '');
+        if (!phoneRegex.test(cleanPhone)) {
+            alert('Please enter a valid 10-digit Indian phone number.');
+            return;
+        }
+
+        // Log the appointment data (in production, this would send to a backend)
+        console.log('Appointment booked:', formData);
+
+        // Show success message
+        appointmentForm.style.display = 'none';
+        formSuccess.style.display = 'block';
+
+        // Scroll to success message
+        formSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+}
+
+// Book another appointment
+if (bookAnother) {
+    bookAnother.addEventListener('click', function() {
+        appointmentForm.reset();
+        formSuccess.style.display = 'none';
+        appointmentForm.style.display = 'flex';
+        appointmentForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
